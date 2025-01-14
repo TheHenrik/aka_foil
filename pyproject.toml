@@ -1,0 +1,22 @@
+[project]
+name = "aka-foil"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Tjalf Stadel", email = "tjalf.stadel@web.de" },
+    { name = "Jannik Frank", email = "jannik.frank@akamodell.de"}
+]
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=2.2.1",
+    "polars>=1.19.0",
+    "torch>=2.5.1",
+]
+
+[project.scripts]
+aka-foil = "aka_foil:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
