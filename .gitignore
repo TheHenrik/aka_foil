@@ -8,4 +8,4 @@ wheels/
 
 # Virtual environments
 .venv
-data/
+data/cleaned_data.csv
