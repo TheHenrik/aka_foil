@@ -9,4 +9,5 @@ wheels/
 
 # Virtual environments
 .venv
-data/cleaned_data.csv
+data/
+!data/cleaned_dataset.csv

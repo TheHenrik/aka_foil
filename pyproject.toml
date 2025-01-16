@@ -10,9 +10,11 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "keras>=3.8.0",
+    "matplotlib>=3.10.0",
     "numpy>=2.0.2",
     "polars>=1.19.0",
-    "ray[tune]>=2.40.0",
+    "pyqt6>=6.8.0",
+    "ray[tune, default]>=2.40.0",
     "torch>=2.5.1",
 ]
 

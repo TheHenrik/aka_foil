@@ -9,6 +9,7 @@ from ray.train import Checkpoint
 from ray.tune.schedulers import ASHAScheduler
 from aka_foil.split_data import create_train_data, data_loader
 from pathlib import Path
+import ray
 
 # Define the MLP model
 class MLP(nn.Module):
@@ -47,10 +48,9 @@ def train_aka_foil(config, data):
             net = nn.DataParallel(net)
     net.to(device)
 
-    criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=config['lr'])
 
-    for epoch in range(20):  # loop over the dataset multiple times
+    for epoch in range(1_000):  # loop over the dataset multiple times
         running_loss = 0.0
         epoch_steps = 0
         for i, data in enumerate(train_loader):
@@ -63,7 +63,7 @@ def train_aka_foil(config, data):
 
             # forward + backward + optimize
             outputs = net(inputs)
-            loss = criterion(outputs, labels)
+            loss = loss_func(outputs, labels)
             loss.backward()
             optimizer.step()
 
@@ -78,19 +78,14 @@ def train_aka_foil(config, data):
         # Validation loss
         val_loss = 0.0
         val_steps = 0
-        total = 0
-        correct = 0
         for i, data in enumerate(val_loader, 0):
             with torch.no_grad():
                 inputs, labels = data
                 inputs, labels = inputs.to(device), labels.to(device)
 
                 outputs = net(inputs)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
 
-                loss = criterion(outputs, labels)
+                loss = loss_func(outputs, labels)
                 val_loss += loss.cpu().numpy()
                 val_steps += 1
 
@@ -106,7 +101,7 @@ def train_aka_foil(config, data):
             )
             checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
             train.report(
-                {"loss": (val_loss / val_steps), "accuracy": correct / total},
+                {"loss": (val_loss / val_steps)},
                 checkpoint=checkpoint,
             )
     print("Finished Training")
@@ -147,6 +142,15 @@ def test_best_model(best_result, data):
     print("Best trial test set accuracy: {}".format(correct / total))
 
 
+def loss_func(pred: torch.Tensor, actual: torch.Tensor, device: str = "cuda:0") -> torch.Tensor:
+    weight = torch.tensor([0, 1, 1, 1, 1, 1]).to(device)
+    
+    diff = pred - actual
+    diff = diff.nan_to_num_(0)
+    diff = diff * weight
+    return torch.mean(diff ** 2)
+
+
 def main(num_samples=10, max_num_epochs=10, smoke_test=False):
     data = create_train_data(Path("data/small_dataset.csv"))
     
@@ -154,13 +158,12 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
         "hidden_sizes": tune.choice([16, 32, 64, 128]),
         "n_hidden_layers": tune.choice([3, 4, 5]),
         "activation_fn": tune.choice([nn.SELU, nn.SiLU]),
-        "lr": tune.loguniform(1e-4, 1e-1),
-        "epochs": tune.choice([20, 40, 60])
+        "lr": tune.loguniform(5e-4, 5e-2),
     }
 
     scheduler = ASHAScheduler(
         max_t=max_num_epochs,
-        grace_period=1,
+        grace_period=30,
         reduction_factor=2)
     
     tuner = tune.Tuner(
@@ -176,6 +179,8 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
         ),
         param_space=config,
     )
+    context = ray.init()
+    print(context.dashboard_url)
     results = tuner.fit()
     
     best_result = results.get_best_result("loss", "min")
@@ -183,11 +188,9 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
     print("Best trial config: {}".format(best_result.config))
     print("Best trial final validation loss: {}".format(
         best_result.metrics["loss"]))
-    print("Best trial final validation accuracy: {}".format(
-        best_result.metrics["accuracy"]))
 
-    test_best_model(best_result, data=data)
+    # test_best_model(best_result, data=data)
 
 
 if __name__ == "__main__":
-    main(num_samples=2, max_num_epochs=2)
+    main(num_samples=30, max_num_epochs=50)
