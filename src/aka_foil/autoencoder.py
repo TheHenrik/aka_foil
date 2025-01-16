@@ -37,7 +37,7 @@ class Autoencoder(nn.Module):
 
 def main():
     # Load data
-    data = pl.read_csv('data/cleaned_data.csv')
+    data = pl.read_csv('data/small_dataset.csv')
     data = data.select(["kulfan_upper_0", "kulfan_upper_1", "kulfan_upper_2", "kulfan_upper_3", "kulfan_upper_4", "kulfan_upper_5", "kulfan_upper_6", "kulfan_upper_7", "kulfan_lower_0", "kulfan_lower_1", "kulfan_lower_2", "kulfan_lower_3", "kulfan_lower_4", "kulfan_lower_5", "kulfan_lower_6", "kulfan_lower_7", "kulfan_LE_weight", "kulfan_TE_thickness"])
     data = data.to_numpy()
 
@@ -100,4 +100,4 @@ def test():
 
 # Example usage
 if __name__ == "__main__":
-    test()
+    main()
