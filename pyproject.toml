@@ -7,11 +7,12 @@ authors = [
     { name = "Tjalf Stadel", email = "tjalf.stadel@web.de" },
     { name = "Jannik Frank", email = "jannik.frank@akamodell.de"}
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "keras>=3.8.0",
-    "numpy>=2.2.1",
+    "numpy>=2.0.2",
     "polars>=1.19.0",
+    "ray[tune]>=2.40.0",
     "torch>=2.5.1",
 ]
 
