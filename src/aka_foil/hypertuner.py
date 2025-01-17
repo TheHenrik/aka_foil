@@ -28,7 +28,7 @@ class MLP(nn.Module):
 
 # Define the training function
 def train_mlp(config, data):
-    train_loader, test_loader, val_loader = data_loader(data=data, batch_size=32)
+    train_loader, test_loader, val_loader = data_loader(data=data, batch_size=2048)
     input_size = data[0].shape[1]
     output_size = data[1].shape[1]
 

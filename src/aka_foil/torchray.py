@@ -30,7 +30,7 @@ class MLP(nn.Module):
     
 
 def train_aka_foil(config, data):
-    train_loader, test_loader, val_loader = data_loader(data=data, batch_size=32)
+    train_loader, test_loader, val_loader = data_loader(data=data, batch_size=2**13)
     input_size = data[0].shape[1]
     output_size = data[1].shape[1]
 
@@ -70,10 +70,10 @@ def train_aka_foil(config, data):
             # print statistics
             running_loss += loss.item()
             epoch_steps += 1
-            if i % 2000 == 1999:  # print every 2000 mini-batches
-                print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1,
-                                                running_loss / epoch_steps))
-                running_loss = 0.0
+            # if i % 2000 == 1999:  # print every 2000 mini-batches
+            #     print("[%d, %5d] loss: %.3f" % (epoch + 1, i + 1,
+            #                                     running_loss / epoch_steps))
+            #     running_loss = 0.0
 
         # Validation loss
         val_loss = 0.0
@@ -155,15 +155,15 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
     data = create_train_data(Path("data/small_dataset.csv"))
     
     config = {
-        "hidden_sizes": tune.choice([16, 32, 64, 128]),
+        "hidden_sizes": tune.choice([16, 32, 64]),
         "n_hidden_layers": tune.choice([3, 4, 5]),
-        "activation_fn": tune.choice([nn.SELU, nn.SiLU]),
+        "activation_fn": tune.choice([nn.SELU, nn.SiLU, nn.ReLU]),
         "lr": tune.loguniform(5e-4, 5e-2),
     }
 
     scheduler = ASHAScheduler(
         max_t=max_num_epochs,
-        grace_period=30,
+        grace_period=100,
         reduction_factor=2)
     
     tuner = tune.Tuner(
@@ -193,4 +193,4 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=30, max_num_epochs=50)
+    main(num_samples=50, max_num_epochs=500)
