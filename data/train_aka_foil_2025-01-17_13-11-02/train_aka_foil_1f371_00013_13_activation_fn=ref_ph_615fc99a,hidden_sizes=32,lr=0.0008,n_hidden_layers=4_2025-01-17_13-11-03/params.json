@@ -1,0 +1,6 @@
+{
+  "activation_fn": "<class 'torch.nn.modules.activation.SiLU'>",
+  "hidden_sizes": 32,
+  "lr": 0.000792013571742854,
+  "n_hidden_layers": 4
+}

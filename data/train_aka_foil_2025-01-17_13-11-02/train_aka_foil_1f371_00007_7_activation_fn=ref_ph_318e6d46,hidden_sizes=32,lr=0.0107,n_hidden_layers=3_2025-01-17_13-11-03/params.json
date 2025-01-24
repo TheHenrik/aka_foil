@@ -1,0 +1,6 @@
+{
+  "activation_fn": "<class 'torch.nn.modules.activation.ReLU'>",
+  "hidden_sizes": 32,
+  "lr": 0.010684407469079752,
+  "n_hidden_layers": 3
+}
