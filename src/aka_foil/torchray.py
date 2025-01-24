@@ -63,7 +63,7 @@ def train_aka_foil(config, data):
 
             # forward + backward + optimize
             outputs = net(inputs)
-            loss = loss_func(outputs, labels)
+            loss = loss_func(outputs, labels, device=device)
             loss.backward()
             optimizer.step()
 
@@ -85,7 +85,7 @@ def train_aka_foil(config, data):
 
                 outputs = net(inputs)
 
-                loss = loss_func(outputs, labels)
+                loss = loss_func(outputs, labels, device=device)
                 val_loss += loss.cpu().numpy()
                 val_steps += 1
 
@@ -152,13 +152,13 @@ def loss_func(pred: torch.Tensor, actual: torch.Tensor, device: str = "cuda:0") 
 
 
 def main(num_samples=10, max_num_epochs=10, smoke_test=False):
-    data = create_train_data(Path("data/small_dataset.csv"))
+    data = create_train_data(Path("../../data/small_dataset.csv"))
     
     config = {
-        "hidden_sizes": tune.choice([16, 32, 64]),
-        "n_hidden_layers": tune.choice([3, 4, 5]),
-        "activation_fn": tune.choice([nn.SELU, nn.SiLU, nn.ReLU]),
-        "lr": tune.loguniform(5e-4, 5e-2),
+        "hidden_sizes": tune.choice([64]),
+        "n_hidden_layers": tune.choice([5]),
+        "activation_fn": tune.choice([nn.SELU]),
+        "lr": tune.loguniform(0.007, 0.007),
     }
 
     scheduler = ASHAScheduler(
@@ -169,7 +169,7 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
     tuner = tune.Tuner(
         tune.with_resources(
             tune.with_parameters(train_aka_foil, data=data),
-            resources={"cpu": 18, "gpu": 1}
+            resources={"cpu": 10, "gpu": 0}
         ),
         tune_config=tune.TuneConfig(
             metric="loss",
@@ -193,4 +193,4 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=50, max_num_epochs=500)
+    main(num_samples=1, max_num_epochs=500)

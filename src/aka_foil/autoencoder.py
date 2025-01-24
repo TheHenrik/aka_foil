@@ -78,11 +78,11 @@ def test():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = 'cpu'
     model = Autoencoder().to(device)
-    model.load_state_dict(torch.load('weights/autoencoder.pth', map_location=device))
+    model.load_state_dict(torch.load('../../weights/autoencoder.pth', map_location=device))
     model.eval()
 
     # Load test data
-    test_data = pl.read_csv('data/cleaned_data.csv')
+    test_data = pl.read_csv('../../data/cleaned_data.csv')
     test_data = test_data.select(["kulfan_upper_0", "kulfan_upper_1", "kulfan_upper_2", "kulfan_upper_3", "kulfan_upper_4", "kulfan_upper_5", "kulfan_upper_6", "kulfan_upper_7", "kulfan_lower_0", "kulfan_lower_1", "kulfan_lower_2", "kulfan_lower_3", "kulfan_lower_4", "kulfan_lower_5", "kulfan_lower_6", "kulfan_lower_7", "kulfan_LE_weight", "kulfan_TE_thickness"])
     test_data = test_data.to_numpy()
     test_tensor = torch.tensor(test_data, dtype=torch.float32).to(device)

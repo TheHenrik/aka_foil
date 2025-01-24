@@ -5,11 +5,20 @@ from torch.utils.data import DataLoader, TensorDataset
 
 
 def create_train_data(file_path: Path, test_size: float = 0.1, val_size: float = 0.1, seed: int = None):
+    '''
+    Split the data into train, test, and validation sets
+    :param file_path: Path of the .csv file
+    :param test_size: 0 ... 1 fraction of the data to be used for testing
+    :param val_size: 0 ... 1 fraction of the data to be used for validation
+    :param seed: Seed for random generator in sampling Default: None
+    :return: Tuple of Input data and result data for train, test and validation
+            (train_inp, train_res, test_inp, test_res, val_inp, val_res)
+    '''
     # Load the data
     df = pl.read_csv(file_path)
     
     # Shuffle the data
-    df: pl.DataFrame = df.sample(fraction=1, seed=seed)
+    df: pl.DataFrame = df.sample(fraction=1, seed=seed, shuffle=True)
 
     # Select the first 24 columns
     inp = df.select(df.columns[:24]).to_numpy()
@@ -33,6 +42,12 @@ def create_train_data(file_path: Path, test_size: float = 0.1, val_size: float =
 
 
 def data_loader(batch_size: int = 32, data: tuple = None):
+    '''
+    Create DataLoader for train, test, and validation sets
+    :param batch_size: Size fo the DataLoader batches
+    :param data: Tuple of train_inp, train_res, test_inp, test_res, val_inp, val_res
+    :return: DataLoader for train, test, and validation sets (train_loader, test_loader, val_loader)
+    '''
     train_inp, train_res, test_inp, test_res, val_inp, val_res = data
 
     # Convert numpy arrays to PyTorch tensors
