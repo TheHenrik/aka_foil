@@ -8,6 +8,11 @@ from aka_foil.split_data import create_train_data, data_loader
 from pathlib import Path
 import torch
 import ray
+import os
+import tempfile
+from ray.train import Checkpoint
+
+
 
 # Define the MLP model
 class MLP(nn.Module):
@@ -27,7 +32,7 @@ class MLP(nn.Module):
         return self.network(x)
 
 # Define the training function
-def train_mlp(config, data):
+def train_mlp(config, data, checkpoint_dir=str(Path(__file__).parent.parent) + '/data'):
     train_loader, test_loader, val_loader = data_loader(data=data, batch_size=2048)
     input_size = data[0].shape[1]
     output_size = data[1].shape[1]
@@ -68,6 +73,17 @@ def train_mlp(config, data):
             val_loss += loss.item()
     val_loss /= len(val_loader)
 
+    with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+        path = os.path.join(temp_checkpoint_dir, "checkpoint.pt")
+        torch.save(
+            (model.state_dict(), optimizer.state_dict()), path
+        )
+        checkpoint = Checkpoint.from_directory(temp_checkpoint_dir)
+        ray.train.report(
+            {"loss": val_loss},
+            checkpoint=checkpoint,
+        )
+
 
 
 def hyper_tune():
@@ -82,21 +98,26 @@ def hyper_tune():
 
     # Define the scheduler
     scheduler = ASHAScheduler(
+        time_attr="training_iteration",
         metric="loss",
         mode="min",
         max_t=100,
         grace_period=1,
         reduction_factor=2)
     
-    data = create_train_data(Path('data/small_dataset.csv'))
+    data = create_train_data(Path('../../data/small_dataset.csv'))
 
     # Run the hyperparameter search
+
     tune.run(
         tune.with_parameters(train_mlp, data=data),
         resources_per_trial={"cpu": 1, "gpu": 0},
         config=search_space,
         num_samples=10,
-        scheduler=scheduler)
+        scheduler=scheduler,
+        # checkpoint_freq=1,
+        # checkpoint_at_end=True,
+        storage_path=str(Path(__file__).parent.parent.parent) + '/data')
 
 
 if __name__ == "__main__":
