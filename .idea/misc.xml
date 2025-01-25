@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ProjectRootManager" version="2" project-jdk-name="$USER_HOME$/anaconda3/envs/akafoil_v5" project-jdk-type="Python SDK" />
+  <component name="Black">
+    <option name="sdkName" value="C:\IFB\anaconda\envs\aka_foil" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="C:\IFB\anaconda\envs\aka_foil" project-jdk-type="Python SDK" />
 </project>

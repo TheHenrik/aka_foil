@@ -111,8 +111,7 @@ def test_best_model(best_result, data):
     _, test_loader, _ = data_loader(data=data, batch_size=32)
     input_size = data[0].shape[1]
     output_size = data[1].shape[1]
-    
-    
+
     best_trained_model = MLP(input_size=input_size, 
                 hidden_size=best_result.config['hidden_sizes'], 
                 output_size=output_size, 
@@ -151,7 +150,7 @@ def loss_func(pred: torch.Tensor, actual: torch.Tensor, device: str = "cuda:0") 
     return torch.mean(diff ** 2)
 
 
-def main(num_samples=10, max_num_epochs=10, smoke_test=False):
+def main(num_samples=10, max_time=10, smoke_test=False):
     data = create_train_data(Path("../../data/small_dataset.csv"))
     
     config = {
@@ -162,7 +161,8 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
     }
 
     scheduler = ASHAScheduler(
-        max_t=max_num_epochs,
+        time_attr="training_time",
+        max_t=max_time,
         grace_period=100,
         reduction_factor=2)
     
@@ -193,4 +193,4 @@ def main(num_samples=10, max_num_epochs=10, smoke_test=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=1, max_num_epochs=500)
+    main(num_samples=1, max_time=100)

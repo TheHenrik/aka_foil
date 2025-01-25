@@ -16,7 +16,10 @@ def create_train_data(file_path: Path, test_size: float = 0.1, val_size: float =
     '''
     # Load the data
     df = pl.read_csv(file_path)
-    
+
+    # Remove bad data
+    df = df.filter(pl.col("analysis_confidence") != 0)
+
     # Shuffle the data
     df: pl.DataFrame = df.sample(fraction=1, seed=seed, shuffle=True)
 
