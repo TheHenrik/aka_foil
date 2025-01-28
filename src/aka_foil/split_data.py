@@ -2,9 +2,38 @@ from pathlib import Path
 import polars as pl
 import torch
 from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+from numpy import pi as _pi
 
+_deg2rad = 180.0 / _pi
+_rad2deg = _pi / 180.0
 
-def create_train_data(file_path: Path, test_size: float = 0.1, val_size: float = 0.1, seed: int = None):
+def data_input_to_model_input(inp):
+    alpha = inp[:, 18] * _rad2deg
+
+    inp[:, 17] = inp[:, 17] * 50
+    inp[:, 18] = np.sin(2 * alpha)
+    inp = np.insert(inp, 19, np.cos(alpha), axis=1)
+    inp = np.insert(inp, 20, 1 - np.cos(alpha) ** 2, axis=1)
+    inp = np.delete(inp, 22, axis=1)
+    inp[:, 21] = (np.log(inp[:, 21]) - 12.5) / 3.5
+    inp[:, 22] = (inp[:, 22] - 9) / 4.5
+    return inp
+
+def data_output_to_model_output(res):
+    res[:, 1] = 2 * res[:, 1]
+    res[:, 2] = np.log(res[:, 2]) / 2 + 2
+    res[:, 3] = 20 * res[:, 3]
+    return res
+
+def model_output_to_data_output(res):
+    res = res.detach().numpy()
+    res[:, 1] = res[:, 1] / 2
+    res[:, 2] = np.exp((res[:, 2] - 2) * 2)
+    res[:, 3] = res[:, 3] / 20
+    return res
+
+def create_train_data(file_path: Path, test_size: float = 0.1, val_size: float = 0.1, seed: int = None, use_physical_transformations=False):
     '''
     Split the data into train, test, and validation sets
     :param file_path: Path of the .csv file
@@ -26,6 +55,10 @@ def create_train_data(file_path: Path, test_size: float = 0.1, val_size: float =
     # Select the first 24 columns
     inp = df.select(df.columns[:24]).to_numpy()
     res = df.select(df.columns[24:]).to_numpy()
+
+    if use_physical_transformations:
+        inp = data_input_to_model_input(inp)
+        res = data_output_to_model_output(res)
 
     # Split the data into train, test, and validation sets
     test_size = int(len(inp) * test_size)

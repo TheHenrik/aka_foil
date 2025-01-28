@@ -4,10 +4,10 @@ import numpy as np
 data = pl.read_csv('../../data/cleaned_data.csv')
 
 # Filter for n_crit values between 7 and 9
-data = data.filter((pl.col("n_crit") >= 5) & (pl.col("n_crit") <= 12))
+data = data.filter((pl.col("n_crit") >= 4) & (pl.col("n_crit") <= 13))
 
 # Filter for Re values between 3e4 and 1e6
-data = data.filter((pl.col("Re") >= 3e4) & (pl.col("Re") <= 1e6))
+data = data.filter((pl.col("Re") >= 1e4) & (pl.col("Re") <= 2e6))
 
 # Filter for Mach values between 0. and 0.4
 #data = data.filter((pl.col("mach") >= 0) & (pl.col("mach") <= 0.4))
@@ -25,4 +25,4 @@ for i in range(32):
     data = data.drop('lower_bl_ue/vinf_' + str(i))
 
 print(data)
-data.write_csv('../../data/small_dataset_v2.csv')
+data.write_csv('../../data/small_dataset_v3.csv')
