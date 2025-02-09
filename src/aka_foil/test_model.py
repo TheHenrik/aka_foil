@@ -5,21 +5,19 @@ from train_simple_model import MLP
 import torch.nn as nn
 
 # Paths
-airfoil_path = '../../data/airfoils/acc22.dat'
-model_save_path = '../../data/train_aka_foil_2025-01-17_13-11-02/' \
-                  'train_aka_foil_1f371_00003_3_activation_fn=ref_ph_d09f660c,hidden_sizes=64,lr=0.0070,n_hidden_layers=5_2025-01-17_13-11-03/' \
-                  'checkpoint_000499/checkpoint.pt'
+airfoil_path = '../../data/airfoils/ag40.dat'
+# model_save_path = 'bigtry/checkpoint_17325.pth'
 
 # Model config
-hidden_sizes = 64
-n_hidden_layers = 3
+hidden_sizes = 512
+n_hidden_layers = 5
 activation_function = nn.SiLU
 input_size = 25
 output_size = 6
 
 # Operating point
-alphas = np.linspace(-30, 30, num=20)
-Re = 5e5
+alphas = np.linspace(-30, 30, num=100)
+Re = 2e5
 mach = 0
 n_crit = 9
 xtr_upper = 1
@@ -56,12 +54,12 @@ input = data_input_to_model_input(input)
 # Reload model and evaluate for input
 # Lade das gespeicherte Tupel
 # model_state_dict, optimizer_state_dict = torch.load(model_save_path)
-model_state_dict = torch.load('2025-1-26_model.pth')
-
+model_state_dict = torch.load('checkpoint_41200.pth')
+#epoch, model_state_dict, optimizer_state_dict, scheduler_state_dict = torch.load('bigtry/checkpoint_17325.pth')
 net = MLP()
 
 # Lade die Parameter in das Modell
-net.load_state_dict(model_state_dict)
+net.load_state_dict(model_state_dict['model_state_dict'])
 
 # Setze das Modell in den Evaluierungsmodus
 net.eval()
@@ -82,7 +80,7 @@ Bottom_Xtr = results[:, 5]
 
 # Get XFOIL Results from .csv
 # Pfad zur CSV-Datei
-file_path = "../../data/airfoils/T1_Re0.500_M0.00_N9.0.csv"
+file_path = "../../data/airfoils/ag40_T1_Re0.200_M0.00_N9.0.csv"
 
 # Datei einlesen
 ref_data = np.genfromtxt(file_path, delimiter=',', skip_header=1)

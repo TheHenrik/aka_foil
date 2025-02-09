@@ -1,7 +1,7 @@
 from airfoil_handling_functions import *
 from split_data import *
 import torch
-from train_simple_model import MLP
+# from train_simple_model import MLP
 import torch.nn as nn
 
 # Paths
@@ -56,20 +56,21 @@ input = data_input_to_model_input(input)
 # Reload model and evaluate for input
 # Lade das gespeicherte Tupel
 # model_state_dict, optimizer_state_dict = torch.load(model_save_path)
-model_state_dict = torch.load('nn-small.pth')
+model_state_dict = torch.load('nn-xxxlarge.pth', weights_only=True)['model_state_dict']
 
 N_inputs = 25
 width = 512
 n_hidden_layers = 5
 N_outputs = 198
 class Net(torch.nn.Module):
-    def __init__(self, mean_inputs_scaled, cov_inputs_scaled):
+    def __init__(self#, mean_inputs_scaled, cov_inputs_scaled):
+                 ):
         super().__init__()
 
-        self.mean_inputs_scaled = mean_inputs_scaled
-        self.cov_inputs_scaled = cov_inputs_scaled
-        self.inv_cov_inputs_scaled = torch.inverse(cov_inputs_scaled)
-        self.N_inputs = len(mean_inputs_scaled)
+        #self.mean_inputs_scaled = mean_inputs_scaled
+        #self.cov_inputs_scaled = cov_inputs_scaled
+        #self.inv_cov_inputs_scaled = torch.inverse(cov_inputs_scaled)
+        self.N_inputs = N_outputs
 
         layers = [
             torch.nn.Linear(N_inputs, width),
@@ -88,10 +89,10 @@ class Net(torch.nn.Module):
         self.net = torch.nn.Sequential(*layers)
 
     def squared_mahalanobis_distance(self, x: torch.Tensor):
-        return torch.sum(
-            (x - self.mean_inputs_scaled) @ self.inv_cov_inputs_scaled * (x - self.mean_inputs_scaled),
-            dim=1
-        )
+        return 0#torch.sum(
+            #(x - self.mean_inputs_scaled) @ self.inv_cov_inputs_scaled * (x - self.mean_inputs_scaled),
+            #dim=1
+        #)
 
     def forward(self, x: torch.Tensor):
         ### First, evaluate the network normally
