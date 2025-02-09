@@ -15,7 +15,9 @@ dependencies = [
     "polars>=1.19.0",
     "pyqt6>=6.8.0",
     "ray[tune, default]>=2.40.0",
+    "scipy>=1.15.1",
     "torch>=2.5.1",
+    "tqdm>=4.67.1",
 ]
 
 [project.scripts]

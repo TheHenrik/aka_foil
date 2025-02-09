@@ -9,6 +9,8 @@ def analyse(pth: Path):
     result_grid = restored_tuner.get_results()
 
     best_result = result_grid.get_best_result("loss", "min")
+    grid = result_grid.get_dataframe().sort_values("loss", ascending=True)
+    print(grid)
 
     best_hyperparams = best_result.config
     print("Bestes Hyperparameterset:", best_hyperparams)
@@ -18,4 +20,4 @@ def analyse(pth: Path):
 
 
 if __name__ == "__main__":
-    analyse(Path("../../data/train_aka_foil_2025-01-17_13-11-02"))
+    analyse(Path("data/train_aka_foil_2025-01-17_13-11-02"))

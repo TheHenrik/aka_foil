@@ -184,7 +184,6 @@ def get_kulfan_parameters(
     else:
         raise ValueError(f"Invalid method '{method}'.")
 
-
 def get_coordinates_from_raw_dat(raw_text: List[str]) -> np.ndarray:
     """
     Returns a Nx2 ndarray of airfoil coordinates from the raw text of a airfoil *.dat file.

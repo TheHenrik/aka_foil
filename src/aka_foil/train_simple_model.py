@@ -1,19 +1,23 @@
-import torch.nn as nn
-import torch
-from split_data import *
-from datetime import datetime
 import os
+from datetime import datetime
+from pathlib import Path
+
+import torch
+import torch.nn as nn
+from tqdm import tqdm
+
+from aka_foil.split_data import create_train_data, data_loader
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-batch_size = 256 * 2**3
-data = create_train_data(Path('../../data/small_dataset_v3.csv'), test_size=0.2, val_size=0., use_physical_transformations=True)
+batch_size = 2**14
+data = create_train_data(Path('data/cleaned_data.csv'), test_size=0.2, val_size=0., use_physical_transformations=True)
 train_loader, test_loader, val_loader = data_loader(data=data, batch_size=batch_size)
 
 input_size = data[0].shape[1]
 output_size = data[1].shape[1]
-hidden_size = 64
-n_hidden_layers = 3
+hidden_size = 512
+n_hidden_layers = 5
 activation_fn = nn.SiLU
 learning_rate = 1e-4
 #criterion = nn.functional.mse_loss
@@ -107,7 +111,7 @@ def train_model():
 
     # Reload Checkpoint
     checkpoint_folder_path = None
-    if (checkpoint_folder_path != None) and (os.path.exists(checkpoint_folder_path)):
+    if (checkpoint_folder_path is not None) and (os.path.exists(checkpoint_folder_path)):
         all_files = os.listdir(checkpoint_folder_path)
         checkpoint_files = [f for f in all_files if f.startswith("checkpoint") and f.endswith(".pth")]
         epochs = []
@@ -118,6 +122,10 @@ def train_model():
             except (IndexError, ValueError):
                 pass
         start_epoch = max(epochs)
+        a = torch.load(checkpoint_folder_path + f"/checkpoint_{start_epoch}.pth")
+        model.load_state_dict(a['model_state_dict'])
+        optimizer.load_state_dict(a['optimizer_state_dict'])
+        scheduler.load_state_dict(a['scheduler_state_dict'])
     else:
         start_epoch = 0
         today = datetime.today().strftime('%Y-%m-%d')
@@ -125,8 +133,8 @@ def train_model():
         os.makedirs(checkpoint_folder_path, exist_ok=True)
 
     num_epochs = 1_000_000
-    save_every_x_epochs = 5
-    for epoch in range(start_epoch, num_epochs):
+    save_every_x_epochs = 100
+    for epoch in range(start_epoch, num_epochs+1):
         # Training
         model.train() # Sets model in training mode
         train_loss = 0.
@@ -142,7 +150,7 @@ def train_model():
             train_loss += loss.item()
 
         train_loss /= len(train_loader)
-        print(f"Epoch {epoch},  Train Loss: {train_loss:.4f}")
+        print(f"Epoch {epoch},  Train Loss: {train_loss:.4f}", end=" ")
 
         # Testphase
         test_loss = 0.0
@@ -154,7 +162,7 @@ def train_model():
                 loss = criterion(y_hat, y)
                 test_loss += loss.item()
         test_loss /= len(test_loader)
-        print(f"          Test Loss: {test_loss:.4f}")
+        print(f"Test Loss: {test_loss:.4f}")
 
         scheduler.step(test_loss)
 

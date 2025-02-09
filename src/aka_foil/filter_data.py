@@ -1,7 +1,7 @@
 import polars as pl
 import numpy as np
 
-data = pl.read_csv('../../data/cleaned_data.csv')
+data = pl.read_csv('data/cleaned_data.csv')
 
 # Filter for n_crit values between 7 and 9
 data = data.filter((pl.col("n_crit") >= 4) & (pl.col("n_crit") <= 13))
@@ -25,4 +25,4 @@ for i in range(32):
     data = data.drop('lower_bl_ue/vinf_' + str(i))
 
 print(data)
-data.write_csv('../../data/small_dataset_v3.csv')
+data.write_csv('data/small_dataset_v3.csv')

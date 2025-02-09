@@ -77,7 +77,7 @@ def create_train_data(file_path: Path, test_size: float = 0.1, val_size: float =
     return train_inp, train_res, test_inp, test_res, val_inp, val_res
 
 
-def data_loader(batch_size: int = 32, data: tuple = None):
+def data_loader(batch_size: int = 32, data: tuple = None, device: torch.device = torch.device('cuda')):
     '''
     Create DataLoader for train, test, and validation sets
     :param batch_size: Size fo the DataLoader batches
@@ -92,10 +92,8 @@ def data_loader(batch_size: int = 32, data: tuple = None):
     val_dataset = TensorDataset(torch.tensor(val_inp, dtype=torch.float32), torch.tensor(val_res, dtype=torch.float32))
 
     # Create DataLoader for each dataset
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True, persistent_workers=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True, persistent_workers=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True, persistent_workers=True) 
 
     return train_loader, test_loader, val_loader
-
-    

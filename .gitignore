@@ -11,3 +11,4 @@ wheels/
 .venv
 data/
 !data/cleaned_dataset.csv
+checkpoints*
