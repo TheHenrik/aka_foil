@@ -8,32 +8,18 @@ from tqdm import tqdm
 
 from aka_foil.split_data import create_train_data, data_loader
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-batch_size = 2**14
-data = create_train_data(Path('data/cleaned_data.csv'), test_size=0.2, val_size=0., use_physical_transformations=True)
-train_loader, test_loader, val_loader = data_loader(data=data, batch_size=batch_size)
+def criterion(y_hat, y, output_size, device):
+    # Prepare the loss function
+    loss_weights = torch.ones(output_size, dtype=torch.float32).to(device)
+    loss_weights[0] *= 0.  # Analysis confidence
+    loss_weights[1] *= 3  # CL
+    loss_weights[2] *= 5  # ln(CD)
+    loss_weights[3] *= 0.2  # CM
+    loss_weights[4] *= 0.1  # Top Xtr
+    loss_weights[5] *= 0.1  # Bot Xtr
 
-input_size = data[0].shape[1]
-output_size = data[1].shape[1]
-hidden_size = 512
-n_hidden_layers = 5
-activation_fn = nn.SiLU
-learning_rate = 1e-4
-#criterion = nn.functional.mse_loss
-
-# Prepare the loss function
-loss_weights = torch.ones(output_size, dtype=torch.float32).to(device)
-loss_weights[0] *= 0.  # Analysis confidence
-loss_weights[1] *= 3  # CL
-loss_weights[2] *= 5  # ln(CD)
-loss_weights[3] *= 0.2  # CM
-loss_weights[4] *= 0.1  # Top Xtr
-loss_weights[5] *= 0.1  # Bot Xtr
-
-loss_weights = loss_weights / torch.sum(loss_weights) * 1000
-
-def criterion(y_hat, y):
+    loss_weights = loss_weights / torch.sum(loss_weights) * 1000
     unweighted_loss = torch.mean(
             torch.nn.functional.mse_loss(
                 y_hat, y,
@@ -46,7 +32,7 @@ def criterion(y_hat, y):
 
 
 class MLP(nn.Module):
-    def __init__(self):
+    def __init__(self, input_size=25, hidden_size=512, output_size=6, n_hidden_layers=5, activation_fn=nn.SiLU):
         super(MLP, self).__init__()
         layers = []
         in_size = input_size
@@ -92,11 +78,25 @@ class MLP(nn.Module):
 
         return y_fused
 
-def train_model():
+def train_model(config):
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    batch_size = 2**14
+    data = create_train_data(Path('data/cleaned_data.csv'), test_size=0.2, val_size=0., use_physical_transformations=True)
+    train_loader, test_loader, val_loader = data_loader(data=data, batch_size=batch_size)
+
+    input_size = data[0].shape[1]
+    output_size = data[1].shape[1]
+    hidden_size = config["hidden_size"]
+    n_hidden_layers = config["n_hidden_layers"]
+    activation_fn =  config["activation_fn"]
+    learning_rate = config["lr"]
+    #criterion = nn.functional.mse_loss
+
     # Device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # Model
-    model = MLP()
+    model = MLP(input_size=input_size, hidden_size=hidden_size, output_size=output_size, n_hidden_layers=n_hidden_layers, activation_fn=activation_fn)
     model.to(device)
     print(model)
     # Optimizer
@@ -132,6 +132,7 @@ def train_model():
         checkpoint_folder_path = f"checkpoints_{today}"
         os.makedirs(checkpoint_folder_path, exist_ok=True)
 
+    # Training was interrupted before the maximum number of epochs was reached.
     num_epochs = 1_000_000
     save_every_x_epochs = 100
     for epoch in range(start_epoch, num_epochs+1):
@@ -143,7 +144,7 @@ def train_model():
             optimizer.zero_grad()
 
             y_hat = model(x)
-            loss = criterion(y_hat, y)
+            loss = criterion(y_hat, y, output_size, device)
             loss.backward()
 
             optimizer.step()
@@ -178,4 +179,4 @@ def train_model():
 
 
 if __name__ == '__main__':
-    train_model()
+    train_model({"hidden_size": 512, "n_hidden_layers": 5, "activation_fn": nn.SiLU, "lr": 0.0001})

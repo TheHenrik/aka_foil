@@ -1,5 +1,8 @@
+""" 
+This script filters the data to only include the cases with n_crit values between 7 and 9, Re values between 3e4 and 1e6, Mach values between 0. and 0.4,
+and forced transition as the initial dataset is too large for our purposes.
+"""
 import polars as pl
-import numpy as np
 
 data = pl.read_csv('data/cleaned_data.csv')
 

@@ -1,3 +1,8 @@
+"""
+We tried to reduce the dimensionality of the kulfan parameters using an autoencoder.
+Unfortunately, the autoencoder did not work as expected and we had to abandon this approach.
+The code below is the implementation of the autoencoder.
+"""
 import os
 
 os.environ["KERAS_BACKEND"] = "torch"

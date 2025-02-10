@@ -1,6 +1,10 @@
+""" 
+Small script to analyse the results of a hyperparameter search.
+"""
+
 from ray import tune
 from pathlib import Path
-from aka_foil.torchray import train_aka_foil
+from aka_foil.train_hypertuner import train_model as train_aka_foil
 import matplotlib.pyplot as plt
 
 

@@ -1,3 +1,7 @@
+""" 
+Functions to handle airfoil data. Some code from neuralfoil.
+"""
+
 import numpy as np
 from typing import List, Optional, Dict, Union
 from scipy.special import comb

@@ -1,3 +1,7 @@
+""" 
+Define functions to split the data into train, test, and validation sets as well as to create DataLoader for each set.
+"""
+
 from pathlib import Path
 import polars as pl
 import torch

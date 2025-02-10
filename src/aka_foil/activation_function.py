@@ -1,3 +1,7 @@
+"""
+Create visualization of activation functions for the report
+"""
+
 from torch.nn import SELU, SiLU, ReLU
 import numpy as np
 import matplotlib.pyplot as plt
