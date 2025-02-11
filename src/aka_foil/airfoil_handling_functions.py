@@ -3,6 +3,7 @@ from typing import List, Optional, Dict, Union
 from scipy.special import comb
 import re
 import os
+from pathlib import Path
 
 def get_kulfan_parameters(
     coordinates: np.ndarray,
@@ -395,20 +396,113 @@ def get_kulfan_coordinates(
 
     return coordinates
 
+def get_data_from_xfoil(foil_name: str, re: float, num_points: int = 100):
+    airfoil_results_path = os.path.join(
+        Path(__file__).parent.parent.parent, "data", "xfoil_results", f"{foil_name}.csv"
+    )
+    polar_data = np.loadtxt(airfoil_results_path, delimiter=",", skiprows=1)
+
+    re_list = np.unique(polar_data[:, 0])
+
+    if re > re_list[-1]:
+        print(
+            "Warning: Airfoil: %s -> Re=%.0f above max Re in surrogate model"
+            % (foil_name, re)
+        )
+        re = re_list[-1]
+    upper_re = re_list[np.where(re_list >= re)[0][0]]
+    if np.where(re_list >= re)[0][0] == 0:
+        lower_re = re_list[np.where(re_list >= re)[0][0]]
+        print(
+            "Warning: Airfoil: %s -> Re=%.0f below min Re in surrogate model"
+            % (foil_name, re)
+        )
+    else:
+        lower_re = re_list[np.where(re_list >= re)[0][0] - 1]
+
+    polar_data_upper = polar_data[np.where(polar_data[:, 0] == upper_re)[0], :]
+    polar_data_lower = polar_data[np.where(polar_data[:, 0] == lower_re)[0], :]
+
+    min_cl = max(np.min(polar_data_upper[:, 2]), np.min(polar_data_lower[:, 2]))
+    max_cl = min(np.max(polar_data_upper[:, 2]), np.max(polar_data_lower[:, 2]))
+    cls = np.linspace(min_cl, max_cl, num_points)
+    cds = np.array([])
+    cms = np.array([])
+    top_xtrs = np.array([])
+    bot_xtrs = np.array([])
+    alphas = np.array([])
+
+    for cl in cls:
+        CD_upper = np.interp(
+            cl, polar_data_upper[:, 2], polar_data_upper[:, 3], left=1.0, right=1.0
+        )
+        CD_lower = np.interp(
+            cl, polar_data_lower[:, 2], polar_data_lower[:, 3], left=1.0, right=1.0
+        )
+        CD = np.interp(re, [lower_re, upper_re], [CD_lower, CD_upper])
+        cds = np.append(cds, CD)
+
+        CM_upper = np.interp(
+            cl, polar_data_upper[:, 2], polar_data_upper[:, 5], left=1.0, right=1.0
+        )
+        CM_lower = np.interp(
+            cl, polar_data_lower[:, 2], polar_data_lower[:, 5], left=1.0, right=1.0
+        )
+        CM = np.interp(re, [lower_re, upper_re], [CM_lower, CM_upper])
+        cms = np.append(cms, CM)
+
+        top_xtr_upper = np.interp(
+            cl, polar_data_upper[:, 2], polar_data_upper[:, 6], left=1.0, right=1.0
+        )
+        top_xtr_lower = np.interp(
+            cl, polar_data_lower[:, 2], polar_data_lower[:, 6], left=1.0, right=1.0
+        )
+        top_xtr = np.interp(re, [lower_re, upper_re], [top_xtr_lower, top_xtr_upper])
+        top_xtrs = np.append(top_xtrs, top_xtr)
+
+        bot_xtr_upper = np.interp(
+            cl, polar_data_upper[:, 2], polar_data_upper[:, 7], left=1.0, right=1.0
+        )
+        bot_xtr_lower = np.interp(
+            cl, polar_data_lower[:, 2], polar_data_lower[:, 7], left=1.0, right=1.0
+        )
+        bot_xtr = np.interp(re, [lower_re, upper_re], [bot_xtr_lower, bot_xtr_upper])
+        bot_xtrs = np.append(bot_xtrs, bot_xtr)
+
+        alpha_upper = np.interp(
+            cl, polar_data_upper[:, 2], polar_data_upper[:, 1], left=1.0, right=1.0
+        )
+        alpha_lower = np.interp(
+            cl, polar_data_lower[:, 2], polar_data_lower[:, 1], left=1.0, right=1.0
+        )
+        alpha = np.interp(re, [lower_re, upper_re], [alpha_lower, alpha_upper])
+        alphas = np.append(alphas, alpha)
+
+    return np.stack([alphas, cls, cds, cms, top_xtrs, bot_xtrs], axis=1)
+
 
 if __name__ == '__main__':
     coordinates = get_file_coordinates('../../data/airfoils/acc22.dat')
-    print(coordinates)
-    kulfan_parameters = get_kulfan_parameters(coordinates)
-    print(kulfan_parameters)
-    coordinates_reconstructed = get_kulfan_coordinates(**kulfan_parameters)
-    print(coordinates_reconstructed)
+
+    kulfan_parameters = get_kulfan_parameters(coordinates, n_weights_per_side=2)
+    coordinates_reconstructed_low = get_kulfan_coordinates(**kulfan_parameters)
+
+    kulfan_parameters = get_kulfan_parameters(coordinates, n_weights_per_side=8)
+    coordinates_reconstructed_high = get_kulfan_coordinates(**kulfan_parameters)
 
     coordinates = np.array(coordinates)
-    coordinates_reconstructed = np.array(coordinates_reconstructed)
+    coordinates_reconstructed_low = np.array(coordinates_reconstructed_low)
+
+    coordinates = np.array(coordinates)
+    coordinates_reconstructed_high = np.array(coordinates_reconstructed_high)
 
     import matplotlib.pyplot as plt
     plt.scatter(coordinates[:, 0], coordinates[:, 1], label='Original', marker='x', color='red')
-    plt.plot(coordinates_reconstructed[:, 0], coordinates_reconstructed[:, 1], label='Reconstructed')
-    plt.legend()
+    plt.plot(coordinates_reconstructed_low[:, 0], coordinates_reconstructed_low[:, 1], label='2 kulfan weights per side')
+    plt.plot(coordinates_reconstructed_high[:, 0], coordinates_reconstructed_high[:, 1], label='8 kulfan weights per side')
+    plt.legend(fontsize=14, loc='lower right')
+    plt.savefig('kulfan_parameters.pdf')
     plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.plot(get_data_from_xfoil('ag45c', 400_000, num_points=10)[:, 0], get_data_from_xfoil('ag45c', 400_000, num_points=10)[:, 4])
+    # plt.show()
