@@ -1,5 +1,12 @@
 import torch
 from aka_foil.train_simple_model import MLP
+import os
+from pathlib import Path
+import numpy as np
+import matplotlib.pyplot as plt
+from aka_foil.airfoil_handling_functions import get_kulfan_parameters, get_file_coordinates, get_data_from_xfoil
+from aka_foil.split_data import data_input_to_model_input, model_output_to_data_output
+
 
 # Define analysis
 airfoil = 'ag25'
