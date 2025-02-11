@@ -9,7 +9,7 @@ from aka_foil.split_data import data_input_to_model_input, model_output_to_data_
 
 
 # Define analysis
-airfoil = 'ag25'
+airfoil = 'ag36'
 airfoil_path = os.path.join(Path(__file__).parent.parent.parent, "data", "airfoils", f"{airfoil}.dat")
 alphas = np.linspace(-30, 30, num=100)
 re = 4e5
@@ -40,7 +40,7 @@ input = torch.stack(inputs)
 input = data_input_to_model_input(input)
 
 # Load the model from best checkpoint
-model_state_dict = torch.load('weights/checkpoint_41200.pth', map_location=torch.device('cpu'))
+model_state_dict = torch.load('../../weights/checkpoint_41200.pth', map_location=torch.device('cpu'))
 net = MLP()
 net.load_state_dict(model_state_dict['model_state_dict'])
 net.eval()

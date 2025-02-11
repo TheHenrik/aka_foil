@@ -14,9 +14,6 @@ def get_kulfan_parameters(
     n_weights_per_side: int = 8,
     N1: float = 0.5,
     N2: float = 1.0,
-    n_points_per_side: int = 200,
-    normalize_coordinates: bool = True,
-    use_leading_edge_modification: bool = True,
     method: str = "least_squares",
 ) -> Dict[str, Union[np.ndarray, float]]:
     """
@@ -485,7 +482,7 @@ def get_data_from_xfoil(foil_name: str, re: float, num_points: int = 100):
 
 
 if __name__ == '__main__':
-    coordinates = get_file_coordinates('../../data/airfoils/acc22.dat')
+    coordinates = get_file_coordinates('../../data/airfoils/ag36.dat')
 
     kulfan_parameters = get_kulfan_parameters(coordinates, n_weights_per_side=2)
     coordinates_reconstructed_low = get_kulfan_coordinates(**kulfan_parameters)
