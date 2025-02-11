@@ -1,9 +1,6 @@
-from aka_foil.airfoil_handling_functions import *
-from aka_foil.split_data import *
 import torch
-from train_simple_model import MLP
+from aka_foil.train_simple_model import MLP
 
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 # Define analysis
 airfoil = 'ag25'
 airfoil_path = os.path.join(Path(__file__).parent.parent.parent, "data", "airfoils", f"{airfoil}.dat")
@@ -36,7 +33,7 @@ input = torch.stack(inputs)
 input = data_input_to_model_input(input)
 
 # Load the model from best checkpoint
-model_state_dict = torch.load('../../weights/checkpoint_41200.pth', map_location=device)
+model_state_dict = torch.load('weights/checkpoint_41200.pth', map_location=torch.device('cpu'))
 net = MLP()
 net.load_state_dict(model_state_dict['model_state_dict'])
 net.eval()
@@ -47,7 +44,6 @@ results = model_output_to_data_output(net(input))
 xfoil_results = get_data_from_xfoil(airfoil, re, num_points=20)
 
 # Plot the results
-import matplotlib.pyplot as plt
 fig, axes = plt.subplots(2, 2, figsize=(10, 10))
 # Drag
 axes[0, 0].plot(results[:, 2], results[:, 1], label='aka_foil', color='blue')
