@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 # Define analysis
-airfoil = 'ag40'
+airfoil = 'ag25'
 airfoil_path = os.path.join(Path(__file__).parent.parent.parent, "data", "airfoils", f"{airfoil}.dat")
 alphas = np.linspace(-30, 30, num=100)
 res = [8e4, 1.5e5, 5e5]
@@ -49,26 +49,42 @@ input = data_input_to_model_input(input)
 
 # Get the results from xfoil surrogate (for comparison)
 # Create a figure and axis
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(ncols=2, figsize=(20, 10))
 
 # Set up the plot limits
-ax.set_xlim(0, 0.05)
-ax.set_ylim(-0.5, 1.5)
+ax[0].set_xlim(0, 0.05)
+ax[0].set_ylim(-0.5, 1.5)
 
-line1, = ax.plot([], [], color=colors[0])
-line2, = ax.plot([], [], color=colors[1])
-line3, = ax.plot([], [], color=colors[2])
-epoch_text = ax.text(0.05, 0.95, '', transform=ax.transAxes, fontsize=14, verticalalignment='top', bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+ax[1].set_xlim(-5, 15)
+ax[1].set_ylim(-0.5, 1.7)
+
+line1, = ax[0].plot([], [], color=colors[0])
+line2, = ax[0].plot([], [], color=colors[1])
+line3, = ax[0].plot([], [], color=colors[2])
+
+line4,  = ax[1].plot([], [], color=colors[0])
+line5,  = ax[1].plot([], [], color=colors[1])
+line6,  = ax[1].plot([], [], color=colors[2])
+
+epoch_text = ax[1].text(10.6, 1.6, '', fontsize=16, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.3'))
+
 
 for i, re in enumerate(res):
-    xfoil_results = get_data_from_xfoil(airfoil, re, num_points=20)
-    ax.scatter(xfoil_results[:, 2], xfoil_results[:, 1], label='Re=%.3e'%re, marker='x', color=colors[i])
+    xfoil_results = get_data_from_xfoil(airfoil, re, num_points=16)
+    ax[0].scatter(xfoil_results[:, 2], xfoil_results[:, 1], label='Re=%.3e'%re, marker='x', color=colors[i])
+    ax[1].scatter(xfoil_results[:, 0], xfoil_results[:, 1], marker='x', color=colors[i])
 
-ax.set_xlabel(r"$C_D$", fontsize=14)
-ax.set_ylabel(r"$C_L$", fontsize=14)
+ax[0].set_xlabel(r"$C_D$", fontsize=16)
+ax[0].set_ylabel(r"$C_L$", fontsize=16)
 
-ax.grid()
-ax.legend(facecolor='white', edgecolor='black', framealpha=1, fontsize=14)
+ax[1].set_xlabel(r"$\alpha$", fontsize=16)
+ax[1].set_ylabel(r"$C_L$", fontsize=16)
+
+ax[0].grid()
+ax[0].legend(facecolor='white', edgecolor='black', framealpha=1, fontsize=16)
+
+ax[1].grid()
+# ax[1].legend(facecolor='white', edgecolor='black', framealpha=1, fontsize=14)
 
 # Create a line object which will be updated in the animation
 # line, = ax.plot([], [], lw=2)
@@ -82,7 +98,7 @@ def init():
 
 # Animation function which updates the figure
 def animate(i):
-    file = f'../../weights/temp/checkpoint_{i}.pth'
+    file = f'checkpoints_2025-02-07/checkpoint_{i}.pth'
     model_state_dict = torch.load(file, map_location=torch.device('cpu'))
     net = MLP()
     net.load_state_dict(model_state_dict['model_state_dict'])
@@ -91,16 +107,20 @@ def animate(i):
     # Get the results from the neural network
     results = model_output_to_data_output(net(input))
     results1 = results[0:len(alphas), :]
-    results2 = results[len(alphas)+1:2*len(alphas), :]
-    results3 = results[2*len(alphas)+1:3*len(alphas), :]
+    results2 = results[len(alphas):2*len(alphas), :]
+    results3 = results[2*len(alphas):3*len(alphas), :]
 
     line1.set_data(results1[:, 2], results1[:, 1])
     line2.set_data(results2[:, 2], results2[:, 1])
     line3.set_data(results3[:, 2], results3[:, 1])
 
-    epoch_text.set_text(f'Epoch: {i-11700}')
+    line4.set_data(alphas, results1[:, 1])
+    line5.set_data(alphas, results2[:, 1])
+    line6.set_data(alphas, results3[:, 1])
 
-    return line1, line2, line3, epoch_text
+    epoch_text.set_text(f'Epoch: {i-11700:04d}')
+
+    return line1, line2, line3, line4, line5, line6, epoch_text
 
 def animate_ray(i):
     file = f'/var/home/tjalf/ray_results/train_model_2025-02-09_23-30-37/train_model_7cbfa_00196_196_activation_fn=ref_ph_615fc99a,hidden_size=256,lr=0.0005,n_hidden_layers=5_2025-02-09_23-30-38/checkpoint_{i:06d}/checkpoint.pt'
