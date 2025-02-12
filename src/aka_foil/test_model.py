@@ -40,7 +40,7 @@ input = torch.stack(inputs)
 input = data_input_to_model_input(input)
 
 # Load the model from best checkpoint
-model_state_dict = torch.load('../../weights/checkpoint_41200.pth', map_location=torch.device('cpu'))
+model_state_dict = torch.load('../../weights/temp/checkpoint_16000.pth', map_location=torch.device('cpu'))
 net = MLP()
 net.load_state_dict(model_state_dict['model_state_dict'])
 net.eval()

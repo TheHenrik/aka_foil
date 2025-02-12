@@ -4,7 +4,6 @@ from pathlib import Path
 
 import torch
 import torch.nn as nn
-from tqdm import tqdm
 
 from aka_foil.split_data import create_train_data, data_loader
 
